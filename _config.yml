@@ -1,0 +1,26 @@
+safe: true
+markdown: kramdown
+exclude: [ assets ]
+permalink: /:title.html
+
+default_theme: yandex
+default_width: 792
+default_lang: ru
+default_body_class: list
+
+kramdown:
+  enable_coderay: false
+
+presentation:
+    title: Webpack
+    service: Картинки
+    nda: false
+
+author:
+    name: Евгений Шпилевский
+    position: Руководитель группы разработки интерфейсов
+    company:
+        name: Яндекс
+        url:  http://yandex.ru/
+
+progress: true
