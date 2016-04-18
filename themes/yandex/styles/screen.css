@@ -828,4 +828,5 @@ body .slide:first-of-type h2
 
 .center-image {
     max-width: 100%;
+    max-height: 70vh;
 }
