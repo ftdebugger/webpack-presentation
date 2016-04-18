@@ -137,268 +137,416 @@ console.log(sum([1, 2, 3]));
 // webpack.config.js
 {
     context: __dirname + "/src",
-    entry: "./index.js",
+    entry: './index.js',
     output: {
-        path: __dirname + "/dist",
-        filename: "bundle.js"
+        path: __dirname + '/dist',
+        filename: 'bundle.js'
     }
 }
 ~~~
 
-
-## Заголовок
-
-### Вводный текст (первый уровень текста)
-![placeholder](pictures/vertical-placeholder.png){:.right-image}
-
-*  Второй уровень текста
-	* Третий уровень текста (буллиты)
-	* Третий уровень текста (буллиты)
-
-	1. Четвертый уровень текста
-
-## &nbsp;
-{:.with-big-quote}
-> Цитата
-
-Текст
-{:.note}
-
-## Пример подсветки кода на JavaScript
+## WebPack. Two entry points
 
 ~~~ javascript
-!function() {
-    var jar,
-        rstoreNames = /[^\w]/g,
-        storageInfo = window.storageInfo || window.webkitStorageInfo,
-        toString = "".toString;
-
-    jar = this.jar = function( name, storage ) {
-        return new jar.fn.init( name, storage );
-    };
-
-    jar.storages = [];
-    jar.instances = {};
-    jar.prefixes = {
-        storageInfo: storageInfo
-    };
-
-    jar.prototype = this.jar.fn = {
-        constructor: jar,
-
-        version: 0,
-
-        storages: [],
-        support: {},
-
-        types: [ "xml", "html", "javascript", "js", "css", "text", "json" ],
-
-        init: function( name, storage ) {
-
-            // Name of a object store must contain only alphabetical symbols or low dash
-            this.name = name ? name.replace( rstoreNames, "_" ) : "jar";
-            this.deferreds = {};
-
-            if ( !storage ) {
-                this.order = jar.order;
-            }
-
-            // TODO – add support for aliases
-            return this.setup( storage || this.storages );
-        },
-
-        // Setup for all storages
-        setup: function( storages ) {
-            this.storages = storages = storages.split ? storages.split(" ") : storages;
-
-            var storage,
-                self = this,
-                def = this.register(),
-                rejects = [],
-                defs = [];
-
-            this.stores = jar.instances[ this.name ] || {};
-
-            // Jar store meta-info in lc, if we don't have it – reject call
-            if ( !window.localStorage ) {
-                window.setTimeout(function() {
-                    def.reject();
-                });
-                return this;
-            }
-
-            // Initiate all storages that we can work with
-            for ( var i = 0, l = storages.length; i < l; i++ ) {
-                storage = storages[ i ];
-
-                // This check needed if user explicitly specified storage that
-                // he wants to work with, whereas browser don't implement it
-                if ( jar.isUsed( storage ) ) {
-
-                    // If jar with the same name was created, do not try to re-create store
-                    if ( !this.stores[ storage ] ) {
-
-                        // Initiate storage
-                        defs.push( this[ storage ]( this.name, this ) );
-
-                        // Initiate meta-data for this storage
-                        this.log( storage );
-                    }
-
-                } else {
-                    rejects.push( storage );
-                }
-            }
-
-            if ( !this.order ) {
-                this.order = {};
-
-                for ( i = 0, l = this.types.length; i < l; i++ ) {
-                    this.order[ this.types[ i ] ] = storages;
-                }
-            }
-
-            if ( rejects.length == storages.length ) {
-                window.setTimeout(function() {
-                    def.reject();
-                });
-
-            } else {
-                jar.when.apply( this, defs )
-                    .done(function() {
-                        jar.instances[ this.name ] = this.stores;
-
-                        window.setTimeout(function() {
-                            def.resolve([ self ]);
-                        });
-                    })
-                    .fail(function() {
-                        def.reject();
-                    });
-            }
-            return this;
-        }
-    };
-
-    jar.fn.init.prototype = jar.fn;
-
-    jar.has = function( base, name ) {
-        return !!jar.fn.meta( name, base.replace( rstoreNames, "_" ) );
-    };
-}.call( window );
+// webpack.config.js
+{
+    context: __dirname + "/src",
+    entry: {
+        app: './src/index.js',
+        vendor: ['jquery', 'lodash']  
+    },
+    output: {
+        path: __dirname + "/dist",
+        filename: '[name].bundle.js',
+        chunkFilename: '[id].bundle.js'
+    }
+}
 ~~~
 
-## Пример подсветки кода
-{:.code-with-text}
+## Webpack. Output
 
-Вводный текст
+~~~ markup
+Hash: b242e729504977ebd563
+Version: webpack 1.13.0
+Time: 753ms
+           Asset    Size  Chunks             Chunk Names
+   app.bundle.js  1.4 kB       0  [emitted]  app
+vendor.bundle.js  788 kB       1  [emitted]  vendor
+   [0] ./index.js 14 bytes {0} [built]
+   [0] multi vendor 40 bytes {1} [built]
+    + 3 hidden modules
+~~~
+
+
+## Webpack. AMD + CommonJS
 
 ~~~ javascript
-var jar,
-    rstoreNames = /[^\w]/g,
-    storageInfo = window.storageInfo || window.webkitStorageInfo,
-    toString = "".toString;
+var jquery = require('jquery');
 
-jar = this.jar = function( name, storage ) {
-    return new jar.fn.init( name, storage );
+require(['./sum.js'], function(sum) {
+    jquery('body').text(sum([1, 2, 3]));
+});
+~~~
+
+## Webpack. Output
+
+~~~ markup
+Hash: 95904f154d05f7c92a68
+Version: webpack 1.13.0
+Time: 773ms
+           Asset    Size  Chunks             Chunk Names
+   app.bundle.js  271 kB       0  [emitted]  app
+     1.bundle.js  520 kB       1  [emitted]  
+vendor.bundle.js  788 kB       2  [emitted]  vendor
+   [0] ./index.js 127 bytes {0} [built]
+   [0] multi vendor 40 bytes {2} [built]
+   [2] ./sum.js 158 bytes {1} [built]
+    + 3 hidden modules
+~~~
+
+## sum.js
+
+~~~ javascript
+var lodash = require('lodash');
+
+module.exports = function(arr) {
+    return lodash.reduce(arr, function(memo, value) {
+        return memo + value;
+    });
+}
+~~~
+
+## WebPack. Two entry points
+
+~~~ javascript
+var webpack = require('webpack');
+var CommonsChunkPlugin = webpack.optimize.CommonsChunkPlugin;
+
+module.exports = {
+    context: __dirname + '/src',
+    entry: {
+        app: './index.js',
+        vendor: ['jquery', 'lodash']  
+    },
+    output: {
+        path: __dirname + '/dist',
+        filename: '[name].bundle.js',
+        chunkFilename: '[id].bundle.js'
+    },
+    plugins: [
+        new CommonsChunkPlugin('vendor', 'vendor.bundle.js')
+    ]
 };
 ~~~
 
-## &nbsp;
-{:.big-code}
+## Webpack. Output
 
-~~~ javascript
-!function() {
-    var jar,
-        rstoreNames = /[^\w]/g,
-        storageInfo = window.storageInfo || window.webkitStorageInfo,
-        toString = "".toString;
-
-    jar = this.jar = function( name, storage ) {
-        return new jar.fn.init( name, storage );
-    };
-
-    jar.storages = [];
-    jar.instances = {};
-    jar.prefixes = {
-        storageInfo: storageInfo
-    };
-}.call( window );
+~~~ markup
+Hash: 798885e8f502b6c6ccfc
+Version: webpack 1.13.0
+Time: 746ms
+           Asset       Size  Chunks             Chunk Names
+   app.bundle.js  390 bytes       0  [emitted]  app
+     1.bundle.js  268 bytes       1  [emitted]  
+vendor.bundle.js     791 kB       2  [emitted]  vendor
+   [0] ./index.js 127 bytes {0} [built]
+   [0] multi vendor 40 bytes {2} [built]
+   [2] ./sum.js 158 bytes {1} [built]
+    + 3 hidden modules
 ~~~
 
-## LaTeX
+## Webpack. Compile output of app.bundle.js
 
-Библиотека для латекса довольно тяжелая, а нужна она в редких случаях.
-Поэтому она не включена в репу, ее нужно либо установить через bower либо иметь интернет.
+~~~ javascript
+webpackJsonp([0],[
+/* 0 */
+/***/ function(module, exports, __webpack_require__) {
 
-When $a \ne 0$, there are two solutions to \(ax^2 + bx + c = 0\) and they are
-$$x = {-b \pm \sqrt{b^2-4ac} \over 2a}.$$
+    var jquery = __webpack_require__(1);
 
-## Заголовок
-{:.images}
+    // index.js
+    __webpack_require__.e/* require */(1, function(__webpack_require__) { 
+        var __WEBPACK_AMD_REQUIRE_ARRAY__ = [__webpack_require__(2)]; 
+        (function(sum) {
+            jquery('body').text(sum([1, 2, 3]));
+        }.apply(null, __WEBPACK_AMD_REQUIRE_ARRAY__));
+    });
 
-![](pictures/horizontal-placeholder.png)
-*Текст*
+/***/ }
+]);
+~~~
 
-![](pictures/horizontal-placeholder.png)
-*Текст*
+## Webpack. Compile output of 1.bundle.js
 
-![](pictures/horizontal-placeholder.png)
-*Текст*
+~~~ javascript
+webpackJsonp([1],{
 
-## Заголовок
-{:.images .two}
+/***/ 2:
+/***/ function(module, exports, __webpack_require__) {
 
-![](pictures/horizontal-middle-placeholder.png)
-*Текст*
+    var lodash = __webpack_require__(3);
 
-![](pictures/horizontal-middle-placeholder.png)
-*Текст*
+    module.exports = function(arr) {
+        return lodash.reduce(arr, function(memo, value) {
+            return memo + value;
+        });
+    }
 
-## Заголовок
-{:.center}
+/***/ }
 
-![](pictures/horizontal-big-placeholder.png){:.tmp}
+});
+~~~
 
-## **![](pictures/cover-placeholder.png)**
+## Webpack. Loaders
 
-## ![](pictures/horizontal-cover-placeholder.png)
-{:.cover}
+### Лоадеры позволяют подключать модули на любом языке
 
-## Таблица
+* ES6/ES7 - Babel
+* CofeeScript
+* TypeScript
+* Handlebars
+* Jade
+* Stylus
+* Less
+* whatever
 
-|  Locavore      | Umami       | Helvetica | Vegan     |
-+----------------|-------------|-----------|-----------+
-| Fingerstache   | Kale        | Chips     | Keytar    |
-| Sriracha       | Gluten-free | Ennui     | Keffiyeh  |
-| Thundercats    | Jean        | Shorts    | Biodiesel |
-| Terry          | Richardson  | Swag      | Blog      |
-+----------------|-------------|-----------|-----------+
+## Webpack. ES6
+
+~~~ javascript
+// index.js
+import jquery from 'jquery';
+
+require(['./sum.js'], (sum) => {
+    jquery('body').text(sum([1, 2, 3]));
+});
+
+// sum.js
+import lodash from 'lodash';
+
+export default function(arr) {
+    return lodash.reduce(arr, (memo, value) => memo + value);
+}
+~~~
 
 
-## Таблица с дополнительным полем
+## Webpack. Configure loaders
 
-{:.with-additional-line}
-|  Locavore      | Umami       | Helvetica | Vegan     |
-+----------------|-------------|-----------|-----------+
-| Fingerstache   | Kale        | Chips     | Keytar    |
-| Sriracha       | Gluten-free | Ennui     | Keffiyeh  |
-| Thundercats    | Jean        | Shorts    | Biodiesel |
-| Terry          | Richardson  | Swag      | Blog      |
-+----------------|-------------|-----------|-----------+
-| Terry          | Richardson  | Swag      | Blog      |
+~~~ javascript
+var webpack = require('webpack');
+
+module.exports = {
+    // ... ,
+    module: {
+        loaders: [
+            { 
+                test: /\.js$/, 
+                loader: 'babel',
+                exclude: /node_modules/
+            }
+        ]
+    }
+};
+~~~
+
+## Webpack. Compile output for 1.bundle.js
+
+~~~ javascript
+webpackJsonp([1],{
+
+/***/ 2:
+/***/ function(module, exports, __webpack_require__) {
+
+    'use strict';
+
+    Object.defineProperty(exports, "__esModule", {
+        value: true
+    });
+
+    exports.default = function (arr) {
+        return _lodash2.default.reduce(arr, function (memo, value) {
+            return memo + value;
+        });
+    };
+
+    var _lodash = __webpack_require__(3);
+
+    var _lodash2 = _interopRequireDefault(_lodash);
+
+    function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/***/ }
+
+});
+~~~
+
+## Webpack loaders. Stylus
+
+~~~ markup
+// index.styl
+
+.button
+    width 40px
+    height 40px
+    background: url(plus.png)
+~~~
+
+## Webpack configuration
+
+~~~ javascript
+// ....,
+entry: {
+    app: './index.js',
+    vendor: ['jquery', 'lodash'],
+    style: './index.styl'
+},
+module: {
+    loaders: [
+        {
+            test: /\.styl$/,
+            loader: 'css!stylus'
+        },
+        {
+            test: /\.png/,
+            loader: 'file'
+        }
+    ]
+}
+~~~
+
+## Webpack output
+
+~~~ markup
+Hash: a6a2de520f69b9ef0cd9
+Version: webpack 1.13.0
+Time: 5103ms
+                               Asset       Size  Chunks             Chunk Names
+884f0ab049bd23a0b3e15c5f2856064e.png    11.2 kB          [emitted]  
+                       app.bundle.js  558 bytes       0  [emitted]  app
+                         1.bundle.js  518 bytes       1  [emitted]  
+                     style.bundle.js    2.12 kB       2  [emitted]  style
+                    vendor.bundle.js     791 kB       3  [emitted]  vendor
+   [0] multi vendor 40 bytes {3} [built]
+    + 8 hidden modules
+~~~
+
+## Webpack compile output for style.bundle.js
+
+~~~ javascript
+webpackJsonp([2],[
+/* 0 */
+/***/ function(module, exports, __webpack_require__) {
+    exports = module.exports = __webpack_require__(5)();
+    // imports
+    // module
+    exports.push([module.id, ".button {\n  width: 40px;\n  height: 40px;\n  background: url(" + __webpack_require__(6) + ");\n}\n", ""]);
+    // exports
+/***/ },
+/* 1 */,
+/* 2 */,
+/* 3 */,
+/* 4 */,
+/* 5 */
+/***/ function(module, exports) {}])
+~~~
+
+## Usage
+
+~~~ javascript
+import styles from './styles.styl';
+
+console.log(styles); // output css
+~~~
+
+## Webpack configuration
+
+~~~ javascript
+module.exports = { // ...,
+    module: {
+        loaders: [ // ...,
+            {
+                test: /\.styl$/,
+                loader: 'style!css!stylus'
+            }
+        ]
+    }
+};
+~~~
+
+## Usage of style!css!stylus
+
+~~~ javascript
+// button.js
+
+import './button.styl';
+
+export class Button extends Backbone.View {
+    // button code
+}
+
+// index.js
+
+import {Button} from './button.js';
+
+// use Button 
+~~~
+
+## Webpack extract styles
+
+~~~ javascript
+var webpack = require('webpack');
+var ExtractTextPlugin = require('extract-text-webpack-plugin');
+
+module.exports = { // ...,
+    plugins: [ // ...,
+        new ExtractTextPlugin("styles.css")
+    ],
+    module: {
+        loaders: [ // ...,
+            {
+                test: /\.styl$/,
+                loader: ExtractTextPlugin.extract('css!stylus')
+            }
+        ]
+    }
+};
+~~~
+
+## Webpack output
+
+~~~ markup
+Hash: e2829842e539dbaefb2e
+Version: webpack 1.13.0
+Time: 5058ms
+                               Asset       Size  Chunks             Chunk Names
+884f0ab049bd23a0b3e15c5f2856064e.png    11.2 kB          [emitted]  
+                       app.bundle.js  558 bytes       0  [emitted]  app
+                         1.bundle.js  518 bytes       1  [emitted]  
+                     style.bundle.js  117 bytes       2  [emitted]  style
+                    vendor.bundle.js     791 kB       3  [emitted]  vendor
+                          styles.css  100 bytes       2  [emitted]  style
+   [0] multi vendor 40 bytes {3} [built]
+    + 8 hidden modules
+Child extract-text-webpack-plugin:
+        + 3 hidden modules
+~~~
+
+## Webpack compile output for styles.css
+
+~~~ css
+.button {
+  width: 40px;
+  height: 40px;
+  background: url(884f0ab049bd23a0b3e15c5f2856064e.png);
+}
+~~~
+
+## Visualization
+
+![placeholder](pictures/dependencytree.jpg){:.center-image}
 
 ## **Контакты** {#contacts}
 
 <div class="info">
 <p class="author">{{ site.author.name }}</p>
 <p class="position">{{ site.author.position }}</p>
-
-    <div class="contacts">
-        <p class="contacts-left contacts-top phone">+7 (000) 000-00-00</p>
-        <p class="contacts-left mail">почта@yandex-team.ru</p>
-        <p class="contacts-right contacts-top twitter">@twitter</p>
-        <!-- <p class="contacts-right contacts-bottom vk">vk</p> -->
-        <p class="contacts-right facebook">facebook</p>
-    </div>
 </div>
