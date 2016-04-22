@@ -5,8 +5,7 @@ module.exports = {
     context: __dirname + '/src',
     entry: {
         app: './index.js',
-        vendor: ['jquery', 'lodash'],
-        // style: './index.styl'
+        vendor: ['jquery', 'lodash']
     },
     output: {
         path: __dirname + '/dist',
@@ -26,7 +25,7 @@ module.exports = {
             },
             {
                 test: /\.styl$/,
-                loader: 'style!css!stylus', //ExtractTextPlugin.extract('css!stylus')
+                loader: ExtractTextPlugin.extract('css!stylus')
             },
             {
                 test: /\.png/,
